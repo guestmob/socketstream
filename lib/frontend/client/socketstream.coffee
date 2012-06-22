@@ -172,11 +172,13 @@ SS.socket.on 'rtm', (msg) ->
 start = ->
   unless SS.started
     # When the DOM has loaded, call the init method. If we're using jQuery, make sure the DOM has loaded first
-    init = SS.client.app.init
     if jQuery
-      jQuery(document).ready -> init()
+      jQuery(document).ready -> 
+        console.log 'gm ss init'
+        SS.client.app.init()
     else
-      init()
+      console.log 'gm w/out jquery'
+      SS.client.app.init()
     SS.started = new Date
 
 # Displays any application errors in the browser's console
