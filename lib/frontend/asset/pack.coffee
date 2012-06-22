@@ -49,6 +49,28 @@ exports.pack =
     
     app: ->
       output = []
+
+      path = "./lib/client"
+      if files = file_utils.readDirSync(path).files
+        files.forEach (file) ->
+          if file.split('.')[1] == 'coffee'
+            util.log (' Warning! Coffee script in LIB:' + file)
+            exports.assets.compile.coffee file, (result) ->
+              output.push (result.output)
+              yui = utils.yuiJS(file, result, output)
+              output.push (yui)
+          else
+            util.log('  Adding ' + file)
+            js = fs.readFileSync "#{file}", 'utf8'
+            #js = utils.minifyJS("#{file}", js)
+            output.push(js)
+      final_output = output.join("\n")
+      final_output += "\n"
+      final_output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
+      final_output += "\n"
+  
+      output = []
+
       exports.assets.client_dirs.map (dir) ->
         path = "./app/#{dir}"
         if files = file_utils.readDirSync(path).files
@@ -56,13 +78,19 @@ exports.pack =
           files.forEach (file) ->
             if file.split('.')[1] == 'coffee'
               util.log('  Compiling and adding ' + file)
-              exports.assets.compile.coffee file, (result) -> output.push(result.output)
+              exports.assets.compile.coffee file, (result) ->
+                output.push (result.output)
+                #yui = utils.yuiJS(file, result.output)
+                #output.push (yui)
             else
               util.log('  Adding ' + file)
               js = fs.readFileSync "#{SS.root}/#{file}", 'utf8'
+              js = utils.minifyJS("#{file}", js)
               output.push(js)
-      final_output = output.join("\n")
-      final_output = utils.minifyJS('application code', final_output)
+
+      if output.length
+        final_output += output.join("\n")
+        #final_output = utils.minifyJS('application code', final_output)
 
       deleteFilesInPublicDir(/^app.*js$/)
       exports.assets.files.js.app = "app_#{Date.now()}.js"
@@ -71,9 +99,10 @@ exports.pack =
     lib: ->
       deleteFilesInPublicDir(/^lib.*js$/)
       exports.assets.files.js.lib = "lib_#{Date.now()}.js"
-      output = utils.concatFiles('./lib/client')
-      util.log("  Appending SocketStream client files...")
-      output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
+      #output = utils.concatFiles('./lib/client')
+      output = ''
+      #util.log("  Appending SocketStream client files...")
+      #output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
       fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.js.lib}", output)
       emitter.emit('regenerate_html')
     
@@ -110,6 +139,7 @@ exports.pack =
       exports.assets.files.css.lib = "lib_#{Date.now()}.css"
       fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.css.lib}", output)
       util.log('CSS libs concatenated')
+      utils.yuiCSS("#{exports.assets.public_path}/#{exports.assets.files.css.lib}")
       emitter.emit('regenerate_html')
 
 

@@ -2,8 +2,12 @@
 
 fs = require("fs")
 util = require("util")
+ffi  = require("node-ffi")
 coffee = require('coffee-script')
 uglifyjs = require('uglify-js')
+
+java = '/usr/bin/java -jar '
+yui  = '/home/ctlam/bin/yuicompressor-2.4.7.jar '
 
 exports.fileList = (path, first_file = null) ->
   try
@@ -19,7 +23,7 @@ exports.fileList = (path, first_file = null) ->
 exports.concatFiles = (path) ->
   files = @fileList path
   files.map (file_name) ->
-    util.log "  Concatenating file #{file_name}"
+    util.log "   Concatenating file #{file_name}"
     output = fs.readFileSync("#{path}/#{file_name}", 'utf8')
     if file_name.match(/\.coffee$/i)
       util.log "  Compiling #{file_name} into JS..."
@@ -45,6 +49,27 @@ exports.minifyJS = (file_name, orig_code) ->
   min_size = (minified.length / 1024)
   util.log("  Minified #{file_name} from #{formatKb(orig_size)} to #{formatKb(min_size)}")
   minified
+
+exports.yuiJS = (file_name, orig_code) ->
+  util.log("  YUI compress #{file_name}")
+  jsTmp = file_name + '.js'
+  fs.writeFileSync(jsTmp, orig_code)
+  @execSync("#{java} #{yui} --charset utf-8 " + jsTmp + ' -o ' + jsTmp)
+  yuiCode = fs.readFileSync(jsTmp, 'utf8')
+  fs.unlinkSync(jsTmp)
+
+exports.yuiCSS = (file_name) ->
+  util.log("  YUI compress #{file_name}")
+  @execSync("#{java} #{yui} #{file_name} -o #{file_name}")
+
+
+# Need to run synchronously to make sure all files are processed
+exports.execSync = (cmd) ->
+  libc = ffi.Library null, system : ['int32', ['string']]
+  run = libc.system
+  util.log(cmd)
+  run cmd
+
   
 # When serving client files app.coffee or app.js must always be loaded first, so we're ensuring this here for now.
 # This is only temporary as big changes are coming to the way we serve and organise client files

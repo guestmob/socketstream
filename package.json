@@ -19,6 +19,7 @@
     "less":             "= 1.1.5",
     "uglify-js":        "= 1.1.1",
     "argsparser":       "= 0.0.6",
+    "node-ffi" :        "= 0.5.4",
     "semver":           "= 1.0.12"
   },
   "devDependencies": {
