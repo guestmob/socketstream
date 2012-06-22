@@ -174,7 +174,7 @@ start = ->
     # When the DOM has loaded, call the init method. If we're using jQuery, make sure the DOM has loaded first
     if jQuery
       jQuery(document).ready -> 
-        console.log 'gm ss init'
+        console.log 'gm ss init blah'
         SS.client.app.init()
     else
       console.log 'gm w/out jquery'
