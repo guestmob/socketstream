@@ -14,6 +14,11 @@ file_utils = require('../../utils/file')
 
 # Define where the SocketStream client files live
 system_path = __dirname + '/../client'
+bin_path    = __dirname + '/../../../bin'
+
+cdn_push   = "#{bin_path}" + '/rackspace_upload.sh'
+cdn_target = 'cdn_images'
+
 
 exports.init = (@assets) ->
   @
@@ -36,6 +41,10 @@ exports.pack =
   libs: ->
     @js.lib()
     @css.lib()
+
+  debuglibs: ->
+    @js.debuglib()
+    @css.debuglib()
   
   html:
     
@@ -94,6 +103,7 @@ exports.pack =
       deleteFilesInPublicDir(/^app.*js$/)
       exports.assets.files.js.app = "app_#{Date.now()}.js"
       fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.js.app}", final_output)
+      utils.execSync("cd #{exports.assets.public_path}; #{cdn_push} #{cdn_target} #{exports.assets.files.js.app}")
       
     lib: ->
       deleteFilesInPublicDir(/^lib.*js$/)
@@ -102,6 +112,15 @@ exports.pack =
       #output = utils.concatFiles('./lib/client')
       #util.log("  Appending SocketStream client files...")
       #output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
+      fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.js.lib}", output)
+      emitter.emit('regenerate_html')
+
+    debuglib: ->
+      deleteFilesInPublicDir(/^lib.*js$/)
+      exports.assets.files.js.lib = "lib_#{Date.now()}.js"
+      output = utils.concatFiles('./lib/client')
+      util.log("  Appending SocketStream LIB client files...")
+      output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
       fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.js.lib}", output)
       emitter.emit('regenerate_html')
     
@@ -132,7 +151,7 @@ exports.pack =
         fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.css.app}", result.output)
         util.log('Stylus files compiled into CSS')
       
-    lib: ->
+    debuglib: ->
       deleteFilesInPublicDir(/^lib.*css$/)
       output = utils.concatFiles("./lib/css")
       exports.assets.files.css.lib = "lib_#{Date.now()}.css"
@@ -140,6 +159,12 @@ exports.pack =
       util.log('CSS libs concatenated')
       utils.yuiCSS("#{exports.assets.public_path}/#{exports.assets.files.css.lib}")
       emitter.emit('regenerate_html')
+  
+    lib: ->
+      @debuglib()
+      utils.execSync("cd #{exports.assets.public_path}; #{cdn_push} #{cdn_target} #{exports.assets.files.css.lib}")
+
+      
 
 
 # PRIVATE

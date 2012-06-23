@@ -14,6 +14,9 @@ templates = require('./templates.coffee')
 utils = require('./utils.coffee')
 file_utils = require('../../utils/file.js')
 
+
+cdnlink = "https://c15108271.ssl.cf2.rackcdn.com/"
+
 exports.init = (@assets) -> 
   @
 
@@ -106,10 +109,10 @@ cssFile = (file_name) ->
 tag =
 
   css: (path, name) ->
-    '<link href="/' + path + '/' + name + '" media="screen" rel="stylesheet" type="text/css">'
+    '<link href="' + path + '/' + name + '" media="screen" rel="stylesheet" type="text/css">'
 
   js: (path, name) ->
-    '<script src="/' + path + '/' + name + '" type="text/javascript"></script>'
+    '<script src="' + path + '/' + name + '" type="text/javascript"></script>'
 
 # Namespace code in Client and Shared Files
 namespaceClientFile = (input, file_ary, ext) ->
@@ -133,20 +136,34 @@ headersAndTemplates = ->
   inclusions = []
   
   # Include CSS
-  inclusions.push(tag.css('assets', exports.assets.files.css.lib))
   if SS.config.pack_assets
-    inclusions.push(tag.css('assets', exports.assets.files.css.app))
+    inclusions.push(tag.css(cdnlink, exports.assets.files.css.lib))
+  else
+    inclusions.push(tag.css('/assets', exports.assets.files.css.lib))
+  
+  if SS.config.pack_assets
+    # likely zero-size becaseu we combin all css into LIB
+    stats = fs.statSync("#{exports.assets.public_path}/#{exports.assets.files.css.app}")
+    if stats.size isnt 0
+      inclusions.push(tag.css(cdnlink, exports.assets.files.css.app))
   else
     files = file_utils.readDirSync("app/css").files
     files.forEach (path) ->
       file = path.split('/').last()
       # additional files should be linked from app.styl
-      inclusions.push(tag.css('css', file)) if file.split('.')[0] == 'app'
+      inclusions.push(tag.css('/css', file)) if file.split('.')[0] == 'app'
 
   # Include JS
-  inclusions.push(tag.js('assets', exports.assets.files.js.lib))
   if SS.config.pack_assets
-    inclusions.push(tag.js('assets', exports.assets.files.js.app))
+    # likely zero-size because we combine all js into APP
+    stats = fs.statSync("#{exports.assets.public_path}/#{exports.assets.files.js.lib}")
+    if stats.size isnt 0
+      inclusions.push(tag.js(cdnlink, exports.assets.files.js.lib))
+  else
+    inclusions.push(tag.js('/assets', exports.assets.files.js.lib))
+
+  if SS.config.pack_assets
+    inclusions.push(tag.js(cdnlink, exports.assets.files.js.app))
   else
     # When in Development/Staging, we need to iterate through all dirs and include separate links to load each file
     exports.assets.client_dirs.map (dir) ->

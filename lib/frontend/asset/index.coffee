@@ -70,7 +70,10 @@ ensureAssetsExist = ->
     util.log "Generating essential asset files to get you started..."
     try
       ensurePublicPathExists()
-      exports.pack.libs()
+      if SS.config.pack_assets
+        exports.pack.libs()
+      else
+        exports.pack.debuglibs()
       SS.internal.state.save()
       SS.internal.state.last_known = SS.internal.state.current()
     catch e
