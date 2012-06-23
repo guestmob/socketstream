@@ -173,12 +173,13 @@ start = ->
   unless SS.started
     # When the DOM has loaded, call the init method. If we're using jQuery, make sure the DOM has loaded first
     if jQuery
-      jQuery(document).ready -> 
-        console.log 'gm ss init blah'
-        SS.client.app.init()
+      jQuery(document).ready ->
+        log "SS hello from jQuery"
+        init = SS.client.app.init
+        init()
     else
-      console.log 'gm w/out jquery'
-      SS.client.app.init()
+      init = SS.client.app.init
+      init()
     SS.started = new Date
 
 # Displays any application errors in the browser's console

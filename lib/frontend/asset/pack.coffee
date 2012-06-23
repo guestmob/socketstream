@@ -56,16 +56,16 @@ exports.pack =
           if file.split('.')[1] == 'coffee'
             util.log (' Warning! Coffee script in LIB:' + file)
             exports.assets.compile.coffee file, (result) ->
-              output.push (result.output)
               yui = utils.yuiJS(file, result, output)
               output.push (yui)
           else
-            util.log('  Adding ' + file)
+            util.log('  Adding and YUI compressing ' + file)
             js = fs.readFileSync "#{file}", 'utf8'
-            #js = utils.minifyJS("#{file}", js)
+            js = utils.yuiJS("#{file}", js)
             output.push(js)
       final_output = output.join("\n")
       final_output += "\n"
+      util.log("  Appending #{system_path}/cached/lib.min.js")
       final_output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
       final_output += "\n"
   
@@ -77,15 +77,14 @@ exports.pack =
           files = utils.ensureCorrectOrder(files)
           files.forEach (file) ->
             if file.split('.')[1] == 'coffee'
-              util.log('  Compiling and adding ' + file)
+              util.log('  Compiling, adding and YUI compressing ' + file)
               exports.assets.compile.coffee file, (result) ->
-                output.push (result.output)
-                #yui = utils.yuiJS(file, result.output)
-                #output.push (yui)
+                yui = utils.yuiJS(file, result.output)
+                output.push (yui)
             else
-              util.log('  Adding ' + file)
+              util.log('  Adding and YUI compressing ' + file)
               js = fs.readFileSync "#{SS.root}/#{file}", 'utf8'
-              js = utils.minifyJS("#{file}", js)
+              js = utils.yuiJS("#{file}", js) 
               output.push(js)
 
       if output.length
@@ -99,8 +98,8 @@ exports.pack =
     lib: ->
       deleteFilesInPublicDir(/^lib.*js$/)
       exports.assets.files.js.lib = "lib_#{Date.now()}.js"
-      #output = utils.concatFiles('./lib/client')
       output = ''
+      #output = utils.concatFiles('./lib/client')
       #util.log("  Appending SocketStream client files...")
       #output += fs.readFileSync("#{system_path}/cached/lib.min.js", 'utf8')
       fs.writeFileSync("#{exports.assets.public_path}/#{exports.assets.files.js.lib}", output)

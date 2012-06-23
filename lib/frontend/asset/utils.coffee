@@ -6,8 +6,11 @@ ffi  = require("node-ffi")
 coffee = require('coffee-script')
 uglifyjs = require('uglify-js')
 
-java = '/usr/bin/java -jar '
-yui  = '/home/ctlam/bin/yuicompressor-2.4.7.jar '
+system_path = __dirname + '/../../../bin'
+
+
+java = '/usr/bin/env java -jar '
+yui  = "#{system_path}" + "/yuicompressor-2.4.7.jar "
 
 exports.fileList = (path, first_file = null) ->
   try
@@ -51,23 +54,23 @@ exports.minifyJS = (file_name, orig_code) ->
   minified
 
 exports.yuiJS = (file_name, orig_code) ->
-  util.log("  YUI compress #{file_name}")
+  #util.log("  YUI compress #{file_name}")
   jsTmp = file_name + '.js'
   fs.writeFileSync(jsTmp, orig_code)
   @execSync("#{java} #{yui} --charset utf-8 " + jsTmp + ' -o ' + jsTmp)
   yuiCode = fs.readFileSync(jsTmp, 'utf8')
   fs.unlinkSync(jsTmp)
+  yuiCode 
 
 exports.yuiCSS = (file_name) ->
-  util.log("  YUI compress #{file_name}")
+  #util.log("  YUI compress #{file_name}")
   @execSync("#{java} #{yui} #{file_name} -o #{file_name}")
-
 
 # Need to run synchronously to make sure all files are processed
 exports.execSync = (cmd) ->
   libc = ffi.Library null, system : ['int32', ['string']]
   run = libc.system
-  util.log(cmd)
+  #util.log(cmd)
   run cmd
 
   
